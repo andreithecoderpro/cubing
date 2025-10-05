@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cubing Central</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Font Awesome for icons -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      transition: background blue, color blue;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 220px;
+      background: #2a2a2a;
+      color: white;
+      height: 100vh;
+      position: fixed;
+      padding: 20px;
+      overflow: hidden;
+      transition: width 0.3s;
+    }
+
+    #sidebar.collapsed {
+      width: 60px;
+    }
+
+    #sidebar h1 {
+      font-size: 1.4em;
+      margin-bottom: 20px;
+    }
+
+    #sidebar nav a {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      color: #ffd700;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    #sidebar.collapsed nav a span {
+      display: none;
+    }
+
+    #sidebar nav i {
+      width: 30px;
+    }
+
+    #sidebar button {
+      margin-top: 20px;
+      background: #444;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    /* Main content */
+    main {
+      margin-left: 240px;
+      padding: 30px;
+      flex: 1;
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    #sidebar.collapsed + main {
+      margin-left: 80px;
+    }
+
+    section {
+      background: white;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 800px;
+    }
+
+    /* Fullscreen sections */
+    .fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      z-index: 999;
+      overflow: auto;
+      padding: 40px;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    /* Dark mode */
+    .dark-mode {
+      background: #1e1e1e;
+      color: #eee;
+    }
+
+    .dark-mode #sidebar {
+      background: #000;
+    }
+
+    .dark-mode main {
+      background: #1e1e1e;
+    }
+
+    .dark-mode section {
+      background: #333;
+    }
+
+    .dark-mode a {
+      color: #90caf9;
+    }
+
+    /* Timer Display */
+    #timerDisplay {
+      font-size: 2em;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <aside id="sidebar">
+    <h1><i class="fas fa-cube"></i> <span>Cubing</span></h1>
+    <nav>
+      <a href="#" onclick="showFullscreen('timerSection')"><i class="fas fa-stopwatch"></i> <span>Timer</span></a>
+      <a href="#" onclick="showFullscreen('arenasSection')"><i class="fas fa-bolt"></i> <span>Arenas</span></a>
+      <a href="#" onclick="toggleSidebar()"><i class="fas fa-angle-double-left"></i> <span>Collapse</span></a>
+      <a href="#" onclick="toggleDarkMode()"><i class="fas fa-adjust"></i> <span>Dark Mode</span></a>
+    </nav>
+  </aside>
+
+  <main id="mainContent">
+    <section>
+      <h2>Welcome</h2>
+      <p>Explore algorithms, battle arenas, and cubing tutorials!</p>
+    </section>
+  </main>
+
+  <!-- Fullscreen Timer Section -->
+  <section id="timerSection" class="hide">
+    <h2>Timer</h2>
+    <div id="timerDisplay">0.00</div>
+    <p><strong>Ao5:</strong> <span id="ao5">—</span> | <strong>Ao12:</strong> <span id="ao12">—</span></p>
+    <ul id="solveLog"></ul>
+    <br>
+    <p>Press <strong>SPACE</strong> to Start/Stop. Press <strong>R</strong> to Reset.</p>
+    <a href="test.html"><button>Exit</button></a>
+  </section>
+
+  <!-- Fullscreen Arenas Section -->
+  <section id="arenasSection" class="hide">
+    <h2> Cubing Arena</h2>
+    <p>Challenge a fellow cuber to a scramble battle!</p>
+    <ul>
+      <li><strong>Mode:</strong> 1v1 duel</li>
+      
+      <li><strong>Tools:</strong> Timer, Leaderboard, Live Match</li>
+    </ul>
+    <a href="index.html"><button>Exit</button></a>
+  </section>
+
+  <script>
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // Dark mode toggle
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    // Fullscreen toggle
+    function showFullscreen(sectionId) {
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'none';
+      const section = document.getElementById(sectionId);
+      section.classList.add('fullscreen');
+      section.classList.remove('hide');
+    }
+    // Timer with spacebar and averages
+    let timerStart, timerRunning = false, timerInterval;
+    let solveTimes = [];
+
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        if (!timerRunning) {
+          startSolve();
+        } else {
+          endSolve();
+        }
+      }
+      if (event.code === "KeyR") {
+        resetTimer();
+      }
+    });
+
+    function startSolve() {
+      timerStart = Date.now();
+      timerRunning = true;
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - timerStart) / 1000;
+        document.getElementById("timerDisplay").textContent = elapsed.toFixed(2);
+      }, 10);
+    }
+
+    function endSolve() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      const finalTime = (Date.now() - timerStart) / 1000;
+      document.getElementById("timerDisplay").textContent = finalTime.toFixed(2);
+      logSolve(finalTime);
+      updateAverages();
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById("timerDisplay").textContent = "0.00";
+    }
+
+    function logSolve(time) {
+      solveTimes.push(time);
+      const log = document.getElementById("solveLog");
+      const item = document.createElement("li");
+      item.textContent = `Solve ${solveTimes.length}: ${time.toFixed(2)}s`;
+      log.prepend(item);
+    }
+
+    function updateAverages() {
+      document.getElementById("ao5").textContent = getAverage(5);
+      document.getElementById("ao12").textContent = getAverage(12);
+    }
+
+    function getAverage(n) {
+      if (solveTimes.length < n) return "—";
+      const recent = solveTimes.slice(-n);
+      const best = Math.min(...recent);
+      const worst = Math.max(...recent);
+      const trimmed = recent.length > 2 ? recent.filter(t => t !== best && t !== worst) : recent;
+      const avg = trimmed.reduce((sum, t) => sum + t, 0) / trimmed.length;
+      return avg.toFixed(2) + "s";
+    }
+  </script>
+
+</body>
+</html>
